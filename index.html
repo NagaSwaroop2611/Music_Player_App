@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Player App Level 2</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+
+<body>
+  <!-- Music Player Starts -->
+
+  <div class="music-player">
+    <!-- left list section -->
+    <section class="left-section">
+      <!-- logo -->
+      <div class="wsa-logo-container">
+        <img src="./assets/logo/wsa-logo.svg" alt="WSA Logo" />
+      </div>
+
+      <!-- SOng List -->
+      <div class="songs-list-container">
+        <h2>Track List</h2>
+        <div id="song-list">
+          <!-- Add your songs dynamically here -->
+          <!-- Container for each track Start -->
+          <div class="items-container">
+            <div id="item-img">
+              <img src="./assets/icons/outline.svg" alt="image outline" />
+            </div>
+
+            <div id="item-track-data">
+              <p>Title</p>
+              <p>Artist</p>
+            </div>
+
+            <div class="item-track-duration">
+              <p>duration</p>
+              <p>Year</p>
+            </div>
+          </div>
+          <!-- Container for each track ends here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Player with Control -->
+    <div class="player-container">
+      <div class="thumbnail-container" id="thumbnail-container">
+        <img src="" alt="thumbnail" id="thumbnail" />
+      </div>
+      <div class="track-details">
+        <p id="player-title">In the End</p>
+        <p id="player-description">Linkin Park</p>
+      </div>
+
+      <!-- controls -->
+      <div class="controls">
+        <!-- Track Length -->
+        <div class="track-progress">
+          <input type="range" id="progress" min="0" max="100" value="0" step="1" style="padding: 0" />
+
+          <!-- display start and time left -->
+          <div class="time" id="current-time">00:00</div>
+          <div class="time" id="time-left">00:00</div>
+        </div>
+
+        <!-- control buttons -->
+        <div class="btn-group">
+          <button id="shuffle">
+            <img src="./assets/icons/shuffle-highlighted.svg" alt="restart" id="shuffle-img" />
+          </button>
+
+          <button class="next-prev-btn" id="prev">
+            <img src="./assets/icons/prev.svg" alt="" />
+          </button>
+
+          <button id="play-pause">
+            <img src="./assets/icons/pause-button.svg" alt="Paused" />
+          </button>
+
+          <button class="next-prev-btn" id="next">
+            <img src="./assets/icons/next.svg" alt="" />
+          </button>
+
+          <button id="repeat">
+            <img src="./assets/icons/loop.svg" alt="repead img" id="loop-img" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Volume and playback Speed Container-->
+      <div class="player-bottom-controls">
+        <!-- Volume -->
+        <div class="volume-container">
+          <img src="./assets/icons/volume-low.svg" alt="" />
+          <input type="range" id="volume" min="0" max="1" value="0.7" step="0.1" class="volume-range" />
+          <img src="./assets/icons/volume-high.svg" alt="" />
+        </div>
+
+        <!-- Playback Speed -->
+        <div class="custom-dropdown-container" id="custom-dropdown">
+          <div class="custom-dropdown-selected" id="selectedValue">
+            <img src="./assets/icons/headphone.svg" alt="" />
+            Playback Speed
+            <img src="./assets/icons/arrow.svg" alt="" id="dropdown-arrow" />
+
+            <div class="custom-dropdown-items" id="dropdown-list-items">
+              <div class="custom-dropdown-item" data-value="2">2x</div>
+              <div class="custom-dropdown-item" data-value="1.5">1.5x</div>
+              <div class="custom-dropdown-item" data-value="1.25">1.25x</div>
+              <div class="custom-dropdown-item selected-speed" data-value="1">
+                Normal
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup model -->
+  <div id="preview-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-image-container">
+        <span class="close" id="close-modal">
+          <img src="./assets/icons/close.svg" />
+        </span>
+        <img
+          src="https://images.pexels.com/photos/30435654/pexels-photo-30435654/free-photo-of-serene-forest-landscape-with-tall-pine-trees.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+          alt="Previw Image" id="preview-image" />
+        <p class="verified-badge" id="verified">
+          <img src="./assets/icons/verified.svg" alt="" /> Verified Artist
+        </p>
+        <p id="preview-artist">Artist</p>
+      </div>
+
+      <div id="previewDetails">
+        <div class="preview-status">
+          <h1 id="follower-count">100M</h1>
+          <p>Followers</p>
+          <h1 id="listener-count">37346</h1>
+          <p>Monthly Listners</p>
+        </div>
+        <p id="preview-description">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Suscipit minus dolorem,
+          corrupti corporis voluptatibus, ullam quia rerum harum quibusdam veritatis itaque fugiat saepe? Aliquam error
+          distinctio beatae excepturi neque quaerat magnam tempora quo minus voluptatibus, reiciendis totam aliquid in
+          eum possimus blanditiis deleniti nobis, dolor esse perferendis accusamus sunt recusandae!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Music player ends -->
+
+  <script src="./javascript/script.js"></script>
+</body>
+
+</html>
