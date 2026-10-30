@@ -1,4 +1,3 @@
-
 const songs = [
   {
     title: "Drive breakbeat",
@@ -7,11 +6,11 @@ const songs = [
     src: "./data/track1.mp3",
     artist: "Rockot",
     year: 2023,
-    isVerfied: true,
+    isVerified: true,
     followers: 1371245,
-    monthlyListner: 12346313,
+    monthlyListener: 12346313,
     description:
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+      "An energetic breakbeat track featuring powerful electronic drums, catchy rhythms, and dynamic basslines. Perfect for driving, workouts, and high-energy moments.",
   },
   {
     title: "Titanium",
@@ -20,24 +19,24 @@ const songs = [
     src: "./data/track2.mp3",
     artist: "AlisiaBeats",
     year: 2023,
-    isVerfied: true,
+    isVerified: true,
     followers: 50,
-    monthlyListner: 20,
+    monthlyListener: 20,
     description:
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+      "A powerful electronic music experience combining uplifting melodies with deep bass and energetic beats. A perfect choice for motivation and relaxation.",
   },
   {
-    title: "Science Documentory",
+    title: "Science Documentary",
     duration: "2:07",
     thumbnail: "./data/preview-img-3.jpg",
     src: "./data/track3.mp3",
     artist: "Lexin_Music",
     year: 2023,
-    isVerfied: false,
+    isVerified: false,
     followers: 80,
-    monthlyListner: 10,
+    monthlyListener: 10,
     description:
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+      "An atmospheric instrumental composition designed for documentaries, scientific presentations, and educational videos. Creates a sense of curiosity and discovery.",
   },
   {
     title: "Once In Paris",
@@ -46,11 +45,63 @@ const songs = [
     src: "./data/track4.mp3",
     artist: "Pumpupthemind",
     year: 2023,
-    isVerfied: false,
+    isVerified: false,
     followers: 12,
-    monthlyListner: 45,
+    monthlyListener: 45,
     description:
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+      "A relaxing and romantic instrumental inspired by the beautiful streets of Paris. Soft melodies and gentle rhythms create a peaceful atmosphere.",
+  },
+  {
+    title: "Midnight Dreams",
+    duration: "3:15",
+    thumbnail: "./data/preview-img-5.jpg",
+    src: "./data/track5.mp3",
+    artist: "DreamWave",
+    year: 2024,
+    isVerified: true,
+    followers: 24500,
+    monthlyListener: 185000,
+    description:
+      "A dreamy electronic composition featuring ambient synths, smooth transitions, and soothing melodies. Perfect for late-night listening and unwinding.",
+  },
+  {
+    title: "Summer Vibes",
+    duration: "2:58",
+    thumbnail: "./data/preview-img-6.jpg",
+    src: "./data/track6.mp3",
+    artist: "SunnyBeats",
+    year: 2024,
+    isVerified: true,
+    followers: 18700,
+    monthlyListener: 92000,
+    description:
+      "A cheerful and upbeat tropical-inspired track with vibrant melodies, refreshing rhythms, and energetic percussion. Bring the summer feeling wherever you go.",
+  },
+  {
+    title: "Lost In Space",
+    duration: "3:42",
+    thumbnail: "./data/preview-img-7.jpg",
+    src: "./data/track7.mp3",
+    artist: "CosmicSound",
+    year: 2024,
+    isVerified: false,
+    followers: 5600,
+    monthlyListener: 32000,
+    description:
+      "An immersive space-themed instrumental filled with atmospheric soundscapes, futuristic synths, and mysterious melodies. Ideal for creative projects and cinematic backgrounds.",
+  },
+  {
+    title: "Feel The Beat",
+    duration: "2:35",
+    thumbnail: "./data/preview-img-8.jpg",
+    src: "./data/track8.mp3",
+    artist: "BeatMaster",
+    year: 2025,
+    isVerified: true,
+    followers: 78000,
+    monthlyListener: 450000,
+    description:
+      "A high-energy dance track packed with infectious beats, punchy bass, and exciting electronic melodies. Made for parties, dancing, and keeping the energy alive.",
   },
 ];
 
@@ -251,7 +302,10 @@ const previewImg = document.getElementById("preview-image");
 const previewDescription = document.getElementById("preview-description");
 const previewArtist = document.getElementById("preview-artist");
 const followCount = document.getElementById("follower-count");
-const listnerCount = document.getElementById("listner-count");
+const listnerCount = document.getElementById("listener-count");
+
+console.log(listnerCount);
+
 
 // Function to open modal
 function openModalWindow(){
@@ -260,7 +314,7 @@ function openModalWindow(){
   previewImg.src = currentTrack.thumbnail;
   previewArtist.innerText = currentTrack.artist;
   followCount.innerText = currentTrack.followers;
-  listnerCount.innerText = currentTrack.monthlyListner;
+  listnerCount.innerText = currentTrack.monthlyListener;
   previewDescription.innerText = currentTrack.description;
   if(currentTrack.isVerfied){
     document.getElementById("verified").style.display = "flex";
