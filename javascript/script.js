@@ -53,7 +53,7 @@ const songs = [
   },
   {
     title: "Midnight Dreams",
-    duration: "3:15",
+    duration: "3:38",
     thumbnail: "./data/preview-img-5.jpg",
     src: "./data/track5.mp3",
     artist: "DreamWave",
@@ -66,7 +66,7 @@ const songs = [
   },
   {
     title: "Summer Vibes",
-    duration: "2:58",
+    duration: "4:08",
     thumbnail: "./data/preview-img-6.jpg",
     src: "./data/track6.mp3",
     artist: "SunnyBeats",
@@ -79,7 +79,7 @@ const songs = [
   },
   {
     title: "Lost In Space",
-    duration: "3:42",
+    duration: "4:07",
     thumbnail: "./data/preview-img-7.jpg",
     src: "./data/track7.mp3",
     artist: "CosmicSound",
@@ -92,7 +92,7 @@ const songs = [
   },
   {
     title: "Feel The Beat",
-    duration: "2:35",
+    duration: "3:20",
     thumbnail: "./data/preview-img-8.jpg",
     src: "./data/track8.mp3",
     artist: "BeatMaster",
@@ -105,330 +105,219 @@ const songs = [
   },
 ];
 
-// get access to all dom elements
-const songList = document.getElementById("song-list");
-const thumbnailContainer = document.getElementById("thumbnail-container");
-const thumbnail = document.getElementById("thumbnail");
-const playPauseBtn = document.getElementById("play-pause");
-const prevBtn = document.getElementById("prev");
-const nextBtn = document.getElementById("next");
-const progress = document.getElementById("progress");
-const currTime = document.getElementById("current-time");
-const leftTime = document.getElementById("time-left");
-const volumeControl = document.getElementById("volume");
-const trackTitle = document.getElementById("player-title");
-const trackDescription = document.getElementById("player-description");
-const shuffleBtn = document.getElementById("shuffle");
-const repeatBtn = document.getElementById("repeat");
-const customDropdown = document.getElementById("custom-dropdown");
-const dropdownItems = document.querySelectorAll(".custom-dropdown-item");
-const shuffleImg = document.getElementById("shuffle-img");
-const loopImg = document.getElementById("loop-img");
+// ---------- DOM ----------
+const $ = (id) => document.getElementById(id);
+const songList = $("song-list"), thumbnailContainer = $("thumbnail-container"), thumbnail = $("thumbnail");
+const playPauseBtn = $("play-pause"), prevBtn = $("prev"), nextBtn = $("next");
+const progress = $("progress"), currTime = $("current-time"), leftTime = $("time-left");
+const volumeControl = $("volume"), trackTitle = $("player-title"), trackDescription = $("player-description");
+const shuffleBtn = $("shuffle"), repeatBtn = $("repeat"), shuffleImg = $("shuffle-img"), loopImg = $("loop-img");
+const customDropdown = $("custom-dropdown"), dropdownItems = document.querySelectorAll(".custom-dropdown-item");
 
-
-// To store index of track being played
+// ---------- State ----------
 let currentSongIndex = 0;
+let isShuffleMode = false;
+let repeatMode = "off"; // "off" | "all" | "one"
+let shuffleHistory = []; // so Prev works in shuffle mode
+const audio = new Audio();
+audio.volume = volumeControl.value;
 
-let isShuffleMode = true;
-let isRepeatMode = false;
+// ---------- Helpers ----------
+const lastIndex = () => songs.length - 1;
+const padZero = (n) => (n < 10 ? "0" : "") + n;
+const formatTime = (t) => (isFinite(t) ? `${padZero(Math.floor(t / 60))}:${padZero(Math.floor(t % 60))}` : "00:00");
+const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 
-let audio = new Audio();//Constructor invoked and object creation
-console.log(audio);
-console.dir(audio);//to get the object of audio
-loadSong(currentSongIndex);//Hoisting
-
-
-function updateCurrentSongHighlight(index){
-  // Remove the current-song className
-  const titleElements = document.querySelectorAll(".track-title");
-  titleElements.forEach((element)=>{
-    console.log(element);
-    element.classList.remove("current-song");
-  });
-
-  // Add current song className on the current-song
-  const currentSongTitleElement = document.querySelector(`.item-container[data-index="${index}"] .track-title`);
-
-  if(currentSongTitleElement){
-    currentSongTitleElement.classList.add("current-song");
-  }
-
+function getRandomIndexSong() {
+  if (songs.length < 2) return 0;
+  let i;
+  do { i = Math.floor(Math.random() * songs.length); } while (i === currentSongIndex);
+  return i;
 }
 
+// ---------- Rules for Prev / Next ----------
+// Repeat-one locks playback to the current song, so Prev/Next are disabled in that mode.
+function canGoNext() { return repeatMode !== "one" && (isShuffleMode || repeatMode === "all" || currentSongIndex < lastIndex()); }
+function canGoPrev() { return repeatMode !== "one" && ((isShuffleMode && shuffleHistory.length > 0) || repeatMode === "all" || (!isShuffleMode && currentSongIndex > 0)); }
 
-// To play pause the track
-function playPause(){
-  if(audio.paused){
-    audio.play();
-    playPauseBtn.innerHTML = `<img src = "./assets/icons/play-button.svg"/>`;
-  }
-  else{
-    audio.pause();
-    playPauseBtn.innerHTML = `<img src = "./assets/icons/pause-button.svg"/>`;
-  }
+function updateControlsUI() {
+  nextBtn.disabled = !canGoNext();
+  prevBtn.disabled = !canGoPrev();
+  shuffleImg.src = `./assets/icons/${isShuffleMode ? "shuffle-highlighted" : "shuffle"}.svg`;
+  loopImg.src = `./assets/icons/${repeatMode === "off" ? "loop" : "loop-highlighted"}.svg`;
+  repeatBtn.dataset.mode = repeatMode; // CSS shows a small "1" badge for repeat-one
+  repeatBtn.title = { off: "Repeat: off", all: "Repeat: playlist", one: "Repeat: this song" }[repeatMode];
+  shuffleBtn.title = isShuffleMode ? "Shuffle: on" : "Shuffle: off";
 }
 
-// To load the song
-function loadSong(index){
-  const currentSong = songs[index];
-  audio.src = currentSong.src;
-  thumbnail.src = currentSong.thumbnail;
-  trackTitle.textContent = currentSong.title;
+function updatePlayIcon() {
+  // keeping your original icon mapping
+  playPauseBtn.innerHTML = `<img src="./assets/icons/${audio.paused ? "pause-button" : "play-button"}.svg" alt="${audio.paused ? "Paused" : "Playing"}"/>`;
+}
+
+function updateCurrentSongHighlight(index) {
+  document.querySelectorAll(".item-container").forEach((el) =>
+    el.classList.toggle("active", Number(el.dataset.index) === index));
+  document.querySelectorAll(".track-title").forEach((el) => el.classList.remove("current-song"));
+  const t = document.querySelector(`.item-container[data-index="${index}"] .track-title`);
+  if (t) t.classList.add("current-song");
+}
+
+// ---------- Playback ----------
+function loadSong(index, autoplay = false) {
+  currentSongIndex = index;
+  const s = songs[index];
+  audio.src = s.src;
+  thumbnail.src = s.thumbnail;
+  trackTitle.textContent = s.title;
+  trackDescription.textContent = s.artist;
   currTime.textContent = "00:00";
-  // console.log(audio.duration);
-  audio.addEventListener("loadedmetadata", () => {
-    // console.log(audio.duration);
-    progress.max = audio.duration;
-  });
-  
-  updateCurrentSongHighlight(index)
-}
-
-
-function padZero(number){
-  return(number < 10 ? "0":"") + number;
-}
-
-function formatTime(time){
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${padZero(minutes)}:${padZero(seconds)}`;
-}
-
-// Called periodically to update the progress on track 
-function updateProgress(){
-  const currentTime = audio.currentTime;
-  const duration = audio.duration;
-  const remainingTime = duration - currentTime;
-
-  progress.value = audio.currentTime;
-  currTime.textContent = `${formatTime(currentTime)}`;
-  leftTime.textContent = `${remainingTime >= 0 ? "-"+formatTime(remainingTime):"00:00"}`; 
-}
-
-function updateVolume(){
-  audio.volume = volumeControl.value;
-}
-
-function prevSong(){
-  currentSongIndex = currentSongIndex - 1;
-  if(currentSongIndex >= 0){
-    loadSong(currentSongIndex);
-    playPause();
-    // console.log(currentSongIndex);
-  }
-  else{
-    currentSongIndex = songs.length-1;
-    loadSong(currentSongIndex);
-    playPause();
-  }
-}
-
-function getRandomIndexSong(){
-  const randomIndex = Math.floor(Math.random() * songs.length);
-  return randomIndex;
-}
-
-function nextSong(isBtnClicked) {
-  //If shuffle mode is on
-  if(isShuffleMode) {
-    //Random select a song
-    const randomIndex = getRandomIndexSong();
-    currentSongIndex = randomIndex;
-    loadSong(currentSongIndex);
-    playPause();
-  } 
-  else if(isBtnClicked) {
-    currentSongIndex = currentSongIndex + 1;
-    if (currentSongIndex >= 0 && currentSongIndex <= songs.length - 1) {
-    loadSong(currentSongIndex);
-    playPause();
-    } 
-    else {
-    currentSongIndex = 0;
-    loadSong(currentSongIndex);
-    playPause();
-    }
-  }
-  else{
-  audio.currentTime = 0;
+  leftTime.textContent = "-" + s.duration.padStart(5, "0");
   progress.value = 0;
-  playPause();
-  }
+  updateCurrentSongHighlight(index);
+  updateControlsUI();
+  if (autoplay) audio.play().catch(() => {});
 }
 
-function toggleShuffleMode(){
-  console.log("Hello World");
-  isShuffleMode = true;
-  isRepeatMode = false;
-  shuffleImg.src = "./assets/icons/shuffle-highlighted.svg";
-  loopImg.src = "./assets/icons/loop.svg";
+audio.addEventListener("loadedmetadata", () => { progress.max = audio.duration; });
+audio.addEventListener("play", updatePlayIcon);
+audio.addEventListener("pause", updatePlayIcon);
+
+function playPause() {
+  if (audio.paused) audio.play().catch(() => {});
+  else audio.pause();
 }
 
-function toggleRepeatMode(){
-  isShuffleMode = false;
-  isRepeatMode = true;
-  shuffleImg.src = "./assets/icons/shuffle.svg";
-  loopImg.src = "./assets/icons/loop-highlighted.svg";
+function nextSong() {
+  if (!canGoNext()) return;
+  let next;
+  if (isShuffleMode) { shuffleHistory.push(currentSongIndex); next = getRandomIndexSong(); }
+  else next = currentSongIndex < lastIndex() ? currentSongIndex + 1 : 0; // wrap only when repeat = all
+  loadSong(next, true);
 }
 
-function toggleDropDown(){
-  if(document.getElementById("dropdown-list-items").style.display === "block"){
-    document.getElementById("dropdown-list-items").style.display = "none";
-    document.getElementById("dropdown-arrow").classList.remove("rotate-270");
-  }
-  else{
-    document.getElementById("dropdown-list-items").style.display = "block";
-    document.getElementById("dropdown-arrow").classList.add("rotate-270");
-  }
+function prevSong() {
+  if (!canGoPrev()) return;
+  let prev;
+  if (isShuffleMode) prev = shuffleHistory.pop();
+  else prev = currentSongIndex > 0 ? currentSongIndex - 1 : lastIndex();
+  loadSong(prev, true);
 }
 
-dropdownItems.forEach(function (item) {
+// Song finished by itself
+audio.addEventListener("ended", () => {
+  if (repeatMode === "one" && !isShuffleMode) { audio.currentTime = 0; audio.play(); }
+  else if (canGoNext()) nextSong();
+  else { audio.currentTime = 0; updatePlayIcon(); } // end of playlist, no repeat: stop
+});
+
+// ---------- Modes ----------
+function toggleShuffleMode() {
+  isShuffleMode = !isShuffleMode;
+  if (isShuffleMode) repeatMode = "off"; // shuffle and repeat are exclusive
+  shuffleHistory = [];
+  updateControlsUI();
+}
+
+function toggleRepeatMode() {
+  repeatMode = { off: "all", all: "one", one: "off" }[repeatMode]; // off -> playlist -> one song -> off
+  if (repeatMode !== "off") isShuffleMode = false;
+  updateControlsUI();
+}
+
+// ---------- Progress / volume ----------
+function updateProgress() {
+  const remaining = audio.duration - audio.currentTime;
+  progress.value = audio.currentTime;
+  currTime.textContent = formatTime(audio.currentTime);
+  leftTime.textContent = remaining >= 0 ? "-" + formatTime(remaining) : "00:00";
+}
+
+// ---------- Speed dropdown ----------
+function toggleDropDown() {
+  const list = $("dropdown-list-items");
+  const open = list.style.display === "block";
+  list.style.display = open ? "none" : "block";
+  $("dropdown-arrow").classList.toggle("rotate-270", !open);
+}
+
+dropdownItems.forEach((item) => {
   item.addEventListener("click", function () {
-    const selectedVal = this.getAttribute("data-value");
-    audio.playbackRate = parseFloat(selectedVal);
-    // Highlight the selected item
-    dropdownItems.forEach(function (item) {
-      item.classList.remove("selected-speed");
-    });
+    const rate = parseFloat(this.dataset.value);
+    audio.playbackRate = audio.defaultPlaybackRate = rate;
+    dropdownItems.forEach((i) => i.classList.remove("selected-speed"));
     this.classList.add("selected-speed");
   });
 });
 
-// Modal JavaScript
-const previewModal = document.getElementById("preview-modal");
-const closeModal = document.getElementById("close-modal");
-const previewImg = document.getElementById("preview-image");
-const previewDescription = document.getElementById("preview-description");
-const previewArtist = document.getElementById("preview-artist");
-const followCount = document.getElementById("follower-count");
-const listnerCount = document.getElementById("listener-count");
+// ---------- Modal ----------
+const previewModal = $("preview-modal"), closeModal = $("close-modal");
 
-console.log(listnerCount);
-
-
-// Function to open modal
-function openModalWindow(){
-  const currentTrack = songs[currentSongIndex];
-  previewModal.style.display = "block";
-  previewImg.src = currentTrack.thumbnail;
-  previewArtist.innerText = currentTrack.artist;
-  followCount.innerText = currentTrack.followers;
-  listnerCount.innerText = currentTrack.monthlyListener;
-  previewDescription.innerText = currentTrack.description;
-  if(currentTrack.isVerfied){
-    document.getElementById("verified").style.display = "flex";
-  }
-  else{
-   document.getElementById("verified").style.display = "none"; 
-  }
+function openModalWindow() {
+  const t = songs[currentSongIndex];
+  previewModal.style.display = "flex";
+  $("preview-image").src = t.thumbnail;
+  $("preview-artist").innerText = t.artist;
+  $("follower-count").innerText = compact.format(t.followers);
+  $("listener-count").innerText = compact.format(t.monthlyListener);
+  $("preview-description").innerText = t.description;
+  $("verified").style.display = t.isVerified ? "flex" : "none"; // was "isVerfied" (typo)
 }
+function closeModalWindow() { previewModal.style.display = "none"; }
+closeModal.addEventListener("click", closeModalWindow);
+window.addEventListener("click", (e) => { if (e.target === previewModal) closeModalWindow(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModalWindow(); });
 
-function closeModalWindow(){
-  previewModal.style.display = "none";
-}
-
-// Event listener to close the preview modal when close button is clicked 
-closeModal.addEventListener("click",closeModalWindow);
-
-//Event listener to close the preview modal when close button is clicked  
-window.addEventListener("click",function(event){
-  if(event.target === previewModal){
-    closeModalWindow();
-  }
-})
-
-// Rendering the song list
-function renderSongList(){
-  // Clear our existing list
-  songList.innerHTML='';
-  // Render Songs dynamically
-  songs.forEach((song,index) => {
-    console.log(song);
-    // Create Elements for each song
-    const itemContainer = document.createElement("div");
-    const itemImg = document.createElement("div");
-    const imgElement = document.createElement("img");
-    const thumbnailImg = document.createElement("img");
-    const trackDataContainer = document.createElement("div");
-    const trackTitle = document.createElement("p");
-    const trackArtist = document.createElement("p");
-    const trackDurationContainer = document.createElement("div");
-    const trackDuration = document.createElement("p");
-    const trackYear = document.createElement("p");
-
-    // Add Classes 
-    itemContainer.classList.add("item-container");
-    itemContainer.setAttribute("data-index",index);
-    thumbnailImg.classList.add("list-thumbnail");
-    itemImg.classList.add("item-img");
-    trackDataContainer.classList.add("track-data-container");
-    trackTitle.classList.add("track-title");
-    trackArtist.classList.add("track-artist");
-    trackDurationContainer.classList.add("track-duration-container");
-    trackDuration.classList.add("track-duration");
-    trackYear.classList.add("track-year");
-
-    // set attributes and content
-    // Here the eventListeners is attached to every song 
-    // So whenever you click on container the eventListeners will be running not the function renderSongList()
-    itemContainer.addEventListener("click", () => {
-      currentSongIndex = index;
-      loadSong(currentSongIndex);
-      playPause();
-      
+// ---------- Song list ----------
+function renderSongList() {
+  songList.innerHTML = "";
+  songs.forEach((song, index) => {
+    const row = document.createElement("div");
+    row.className = "item-container";
+    row.dataset.index = index;
+    row.innerHTML = `
+      <div class="item-img"><img src="./assets/icons/outline.svg" alt=""/><img class="list-thumbnail" src="${song.thumbnail}" alt=""/></div>
+      <div class="track-data-container"><p class="track-title"></p><p class="track-artist"></p></div>
+      <div class="track-duration-container"><p class="track-duration"></p><p class="track-year"></p></div>`;
+    row.querySelector(".track-title").textContent = song.title;
+    row.querySelector(".track-artist").textContent = song.artist || "Unknown Artist";
+    row.querySelector(".track-duration").textContent = song.duration;
+    row.querySelector(".track-year").textContent = song.year || "Unknown Year";
+    row.addEventListener("click", () => {
+      if (isShuffleMode) shuffleHistory.push(currentSongIndex);
+      loadSong(index, true);
     });
-
-    // Add content and structure the html
-    imgElement.src = "./assets/icons/outline.svg";
-    thumbnailImg.src = song.thumbnail;
-    trackTitle.textContent = song.title;
-    trackArtist.textContent = song.artist || "Unknown Artist";
-    trackDuration.textContent = song.duration;
-    trackYear.textContent = song.year || "Unknown Year";
-
-    // Append elements to container
-    itemImg.appendChild(imgElement);
-    itemImg.appendChild(thumbnailImg);
-    trackDataContainer.appendChild(trackTitle);
-    trackDataContainer.appendChild(trackArtist);
-    trackDurationContainer.appendChild(trackDuration);
-    trackDurationContainer.appendChild(trackYear);
-
-    itemContainer.appendChild(itemImg);
-    itemContainer.appendChild(trackDataContainer);
-    itemContainer.appendChild(trackDurationContainer);
-
-    songList.appendChild(itemContainer);
+    songList.appendChild(row);
   });
   updateCurrentSongHighlight(currentSongIndex);
 }
 
-renderSongList();
-
-// Attach eventListener to DOM elements
-playPauseBtn.addEventListener("click",playPause);
-
-progress.addEventListener("input", function(){
-  audio.currentTime = progress.value;
+// ---------- Wire up ----------
+playPauseBtn.addEventListener("click", playPause);
+progress.addEventListener("input", () => { audio.currentTime = progress.value; });
+volumeControl.addEventListener("input", () => { audio.volume = volumeControl.value; });
+audio.addEventListener("timeupdate", updateProgress);
+prevBtn.addEventListener("click", prevSong);
+nextBtn.addEventListener("click", nextSong);
+shuffleBtn.addEventListener("click", toggleShuffleMode);
+repeatBtn.addEventListener("click", toggleRepeatMode);
+customDropdown.addEventListener("click", toggleDropDown);
+thumbnailContainer.addEventListener("click", openModalWindow);
+window.addEventListener("click", (e) => {
+  if (!e.target.closest(".custom-dropdown-selected")) {
+    $("dropdown-list-items").style.display = "none";
+    $("dropdown-arrow").classList.remove("rotate-270");
+  }
 });
 
-volumeControl.addEventListener("input",updateVolume);
-audio.addEventListener("timeupdate",updateProgress);
-prevBtn.addEventListener("click",prevSong);
+renderSongList();
+loadSong(currentSongIndex);
+updatePlayIcon();
 
-nextBtn.addEventListener("click", () => nextSong(true));
-audio.addEventListener("ended",() => nextSong(false));
-shuffleBtn.addEventListener("click",toggleShuffleMode);
-repeatBtn.addEventListener("click",toggleRepeatMode);
-
-customDropdown.addEventListener("click",toggleDropDown);
-thumbnailContainer.addEventListener("click",openModalWindow);
-
-window.addEventListener("click",(event) => {
-  if(!event.target.matches(".custom-dropdown-selected")){
-    const itemsContainer = customDropdown.querySelector(".custom-dropdown-items");
-    itemsContainer.style.display = "none";
-    document.getElementById("dropdown-arrow").classList.remove("rotate-270");
-  }
+// ---------- Volume popover (small screens) ----------
+const volumeContainer = $("volume-container"), volumeToggle = $("volume-toggle");
+volumeToggle.addEventListener("click", (e) => { e.stopPropagation(); volumeContainer.classList.toggle("open"); });
+document.addEventListener("click", (e) => { if (!volumeContainer.contains(e.target)) volumeContainer.classList.remove("open"); });
+volumeControl.addEventListener("input", () => {
+  $("volume-toggle-img").src = `./assets/icons/volume-${Number(volumeControl.value) === 0 ? "low" : "high"}.svg`;
 });
